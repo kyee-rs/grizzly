@@ -1,0 +1,25 @@
+[package]
+name = "grizzly"
+version = "0.1.2"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+clap = { version = "4.3.23", features = ["derive", "cargo"] }
+flate2 = "1.0.27"
+tar = "0.4.40"
+tempfile = "3.8.0"
+minimal-id = "0.8.0"
+anyhow = "1.0.75"
+reqwest = "0.11.20"
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+home = "0.5.5"
+console = { version = "0.15", default-features = false, features = ["ansi-parsing"] }
+indicatif = "0.17.6"
+rand = "0.8.5"
+#openssl = { version = "0.10.35", features = ["vendored"] }  # I recommend uncommenting this if building for x86_64-unknown-linux-musl.
+
+
+[profile.release]
+panic = "abort"
+strip = "symbols"
