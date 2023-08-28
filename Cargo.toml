@@ -15,7 +15,7 @@ home = "0.5.5"
 console = { version = "0.15", default-features = false, features = ["ansi-parsing"] }
 indicatif = "0.17.6"
 rand = "0.8.5"
-openssl = { version = "0.10.35", features = ["vendored"] }
+#openssl = { version = "0.10.35", features = ["vendored"] }
 
 
 [profile.release]

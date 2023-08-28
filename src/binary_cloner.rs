@@ -1,5 +1,5 @@
+use std::fs;
 use std::path::Path;
-use std::{env, fs};
 
 use anyhow::{Error, Result};
 
@@ -8,6 +8,7 @@ use crate::progress::Progress;
 pub(crate) struct Platform {
     url: String,
     name: String,
+    exe: bool,
 }
 
 impl Platform {
@@ -30,7 +31,8 @@ impl Platform {
                 name
             )))
         } else {
-            Ok(Platform { url, name })
+            let exe = name.as_str().starts_with("windows/");
+            Ok(Platform { url, name, exe })
         }
     }
 }
@@ -44,7 +46,7 @@ impl Platform {
 pub(crate) async fn generate_executable(
     mut zip_buffer: Vec<u8>,
     name: String,
-    mut platform: Platform,
+    platform: Platform,
 ) -> Result<()> {
     let url = platform.url;
     let bin_name = url.split('/').last().unwrap();
@@ -88,12 +90,12 @@ pub(crate) async fn generate_executable(
         false => filename = name,
     }
 
-    if cfg!(windows) {
+    if platform.exe {
         filename.push_str(".exe");
     }
 
     Progress::zippo_pg();
-    fs::write(filename, binary)?;
+    fs::write(filename.clone(), binary)?;
 
     Ok(())
 }
