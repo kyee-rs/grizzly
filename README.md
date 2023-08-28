@@ -4,7 +4,7 @@
 
 I've created `Grizzly` as a hobby project. I thought that we don't need
 long commands (`tar -xvf ...`) or external apps to create and unzip an archive anymore.
-Create binaries that store all your files inside with only `~2MB` overwhelm and distribute them wherever you want.
+Create binaries that store all your files inside with only `453 KB` overhead and distribute them wherever you want.
 
 ### CLI
 

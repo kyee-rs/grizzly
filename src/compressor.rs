@@ -1,45 +1,37 @@
 use std::fs::File;
+use std::io;
+use std::io::Cursor;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use flate2::write::GzEncoder;
-use flate2::Compression;
-use tempfile::TempDir;
+use zip::write::FileOptions;
+use zip::ZipWriter;
 
 use crate::progress::Progress;
 
-/// Compress the `files: Vec<&PathBuf>` into a temporary tarball (*.tar.gz).
-/// - Returns: `anyhow::Result<(TempDir, PathBuf)>`.
-///     - `TempDir` is a directory, where file is stored
-///     - `PathBuf` is a file name in directory from `TempDir`
-pub async fn compress(files: Vec<&PathBuf>) -> Result<(TempDir, PathBuf)> {
-    Progress::temp_storage_pg(); // Print the first stage (Creating temporary storage)
+/// Compress the `files: Vec<&PathBuf>` into a zip archive and return its buffer.
+/// - Returns: `anyhow::Result<Vec<u8>>`.
+///     - `Vec<u8>` is a buffer
+pub(crate) async fn compress(files: Vec<&PathBuf>) -> Result<Vec<u8>> {
+    Progress::allocating_space_pg();
+    let mut buffer = Cursor::new(Vec::new()); // Allocate buffer for zip-compressed data
 
-    // Create a tarball
-    let temp_dir = tempfile::Builder::new().prefix("grizzly").tempdir()?;
-    let file_name = temp_dir.path().join("grizzly_tarball.tar.gz");
-    let f = File::create(file_name.clone())?;
-    let enc = GzEncoder::new(f, Compression::fast());
-    let mut tar = tar::Builder::new(enc);
-    //////
+    Progress::creating_zip_pg();
+    {
+        let mut zip = ZipWriter::new(&mut buffer);
+        let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
-    Progress::creating_tarball(); // Print the second stage (Creating a tarball)
-
-    // Append files to a created tarball.
-    for file in files {
-        if file.to_str() == Some(".") {
-            tar.append_dir_all("", ".")?;
-        } else if file.is_dir() {
-            let file_name = file.file_name().expect("Failed to extract the file name.");
-            tar.append_dir_all(file_name, file)?;
-        } else {
-            let file_name = file.file_name().expect("Failed to extract the file name.");
-            tar.append_file(file_name, &mut File::open(file).unwrap())?;
+        for file in files {
+            if let Some(filename) = file.file_name() {
+                if let Ok(mut f) = File::open(file) {
+                    zip.start_file(filename.to_string_lossy(), options)?; // If file has a valid name, push it to zip
+                    io::copy(&mut f, &mut zip)?;
+                }
+            }
         }
+
+        zip.finish()?; // Close the zip data and save
     }
-    //////
 
-    drop(tar); // Release the tarball
-
-    Ok((temp_dir, file_name))
+    Ok(buffer.into_inner())
 }

@@ -9,30 +9,30 @@ static SPARKLE: Emoji<'_, '_> = Emoji("✨ ", "");
 
 /// `Progress` - Struct with methods for notifying the user of current bundling stage.
 impl Progress {
-    pub(crate) fn temp_storage_pg() {
+    pub(crate) fn allocating_space_pg() {
         println!(
-            "{} {}Creating temporary storage...",
+            "{} {}Allocating space for a ZIP Archive...",
             style("[1/4]").bold().dim(),
             FILE
         );
     }
-    pub(crate) fn creating_tarball() {
+    pub(crate) fn creating_zip_pg() {
         println!(
-            "{} {}Creating a tarball...",
+            "{} {}Creating a zip-file...",
             style("[2/4]").bold().dim(),
             ARCHIVE
         );
     }
-    pub(crate) fn generating_code_pg() {
+    pub(crate) fn insert_pg() {
         println!(
-            "{} {}Generating the code...",
+            "{} {}Inserting zip-file inside your binary...",
             style("[3/4]").bold().dim(),
             COMPUTER
         );
     }
-    pub(crate) fn compile_pg() {
+    pub(crate) fn zippo_pg() {
         println!(
-            "{} {}Compiling the code...",
+            "{} {}Writing your binary using Zippo...",
             style("[4/4]").bold().dim(),
             COMPUTER
         );
