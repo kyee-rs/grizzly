@@ -16,7 +16,7 @@ mod progress;
 fn cli() -> Command {
     Command::new("grizzly")
         .name("grizzly")
-        .version("v0.0.1-rc4")
+        .version("v0.1.2-rc-2")
         .bin_name("grizzly")
         .author("morph-ua / 12subnet (github.com/12subnet)")
         .about("A powerful CLI tool for creating self-extractable (SFX) archives.")
