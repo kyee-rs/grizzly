@@ -132,7 +132,7 @@ jobs:
         run: |
           docker build -t grizzly .
           docker tag grizzly:latest ghcr.io/12subnet/grizzly:latest
-          docker tag grizzly:latest ghcr.io/12subnet/grizzly:${{ github.sha }}
+          docker tag grizzly:latest ghcr.io/12subnet/grizzly:${{ github.ref_name }}
       - name: Push Docker Image
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
