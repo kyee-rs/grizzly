@@ -119,8 +119,9 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
+          name: "Grizzly: ${{ github.ref_name }}"
           files: ${{ matrix.platform.bin }}
+          body: "**Calculating Zippo blank executable size**"
 
   release_docker_image:
     name: Build Docker Image
