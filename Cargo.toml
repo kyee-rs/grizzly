@@ -9,7 +9,7 @@ clap = { version = "4.3.23", features = ["derive", "cargo"] }
 zip = "0.6.6"
 cool-id-generator = "1.0.1"
 anyhow = "1.0.75"
-reqwest = { version = "0.11.20", default_features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.11", default_features = false, features = ["native-tls-vendored"] }
 tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
 home = "0.5.5"
 console = { version = "0.15", default-features = false, features = ["ansi-parsing"] }
