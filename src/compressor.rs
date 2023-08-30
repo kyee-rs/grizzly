@@ -1,11 +1,12 @@
 use std::fs::File;
-use std::io::Cursor;
+use std::io;
+use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
-use std::{fs, io};
 
 use anyhow::Result;
+use walkdir::{DirEntry, WalkDir};
 use zip::write::FileOptions;
-use zip::ZipWriter;
+use zip::{CompressionMethod, ZipWriter};
 
 use crate::progress::Progress;
 
@@ -19,11 +20,15 @@ pub(crate) async fn compress(files: Vec<&PathBuf>) -> Result<Vec<u8>> {
     Progress::creating_zip_pg();
     {
         let mut zip = ZipWriter::new(&mut buffer);
-        let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        let options = FileOptions::default()
+            .compression_method(CompressionMethod::Deflated)
+            .unix_permissions(0o755);
 
         for file in files {
             if file.is_dir() {
-                recursive_dir_compress(file, &mut zip, options)?;
+                let dir = WalkDir::new(file.to_string_lossy().to_string());
+                let it = dir.into_iter();
+                dir_compress(&mut it.filter_map(|e| e.ok()), &mut zip, options)?;
             } else if let Some(filename) = file.file_name() {
                 if let Ok(mut f) = File::open(file) {
                     zip.start_file(filename.to_string_lossy(), options)?; // If file has a valid name, push it to zip
@@ -46,22 +51,27 @@ pub(crate) async fn compress(files: Vec<&PathBuf>) -> Result<Vec<u8>> {
 ///    - `options`: `FileOptions` - Options for the compression
 ///
 /// **Returns**: `anyhow::Result<()>`
-fn recursive_dir_compress(
-    dir: &PathBuf,
+fn dir_compress(
+    it: &mut dyn Iterator<Item = DirEntry>,
     zip: &mut ZipWriter<&mut Cursor<Vec<u8>>>,
     options: FileOptions,
 ) -> Result<()> {
-    for entry in fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_dir() {
-            recursive_dir_compress(&path, zip, options)?;
-        } else if let Some(filename) = path.file_name() {
-            if let Ok(mut f) = File::open(&path) {
-                zip.start_file(filename.to_string_lossy(), options)?;
-                io::copy(&mut f, zip)?;
-            }
+    let mut buffer = Vec::new();
+
+    for entry in it {
+        let name = entry.path();
+
+        if name.is_file() {
+            zip.start_file(name.to_string_lossy(), options)?;
+            let mut f = File::open(name)?;
+
+            f.read_to_end(&mut buffer)?;
+            zip.write_all(&buffer)?;
+            buffer.clear();
+        } else if !name.as_os_str().is_empty() {
+            zip.add_directory(name.to_string_lossy(), options)?;
         }
     }
+
     Ok(())
 }

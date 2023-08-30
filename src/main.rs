@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
         .get_many::<PathBuf>("file")
         .into_iter()
         .flatten()
-        .collect::<Vec<_>>(); // Collect the files from the request
+        .collect::<Vec<&PathBuf>>(); // Collect the files from the request
 
     let zip_buffer = compress(paths).await?; // Call the compressor and get back a zip buffer
     let (file_size, platform_size) = generate_executable(zip_buffer, name, platform).await?; // Clone the Zippo Executable and append a ZIP to it.

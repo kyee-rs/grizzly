@@ -1,11 +1,11 @@
 [package]
 name = "grizzly"
-version = "0.1.2-rc-2"
+version = "0.1.2-rc-3"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-clap = { version = "4.3.23", features = ["derive", "cargo"] }
+clap = { version = "4.4.0", features = ["derive", "cargo"] }
 zip = "0.6.6"
 cool-id-generator = "1.0.1"
 anyhow = "1.0.75"
@@ -16,7 +16,6 @@ console = { version = "0.15", default-features = false, features = ["ansi-parsin
 indicatif = "0.17.6"
 rand = "0.8.5"
 walkdir = "2.3.3"
-
 
 [profile.release]
 panic = "abort"

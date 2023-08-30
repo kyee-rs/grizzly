@@ -9,15 +9,14 @@ use crate::progress::Progress;
 
 pub(crate) struct Platform {
     url: String,
-    name: String,
-    exe: bool,
+    binary_name: String,
     binary_size: Option<u64>,
 }
 
 impl Platform {
     // Load the platform information based on the name
     pub(crate) fn from(name: String) -> Result<Platform> {
-        let prefix = "https://github.com/12subnet/zippo/releases/download/v0.1.0";
+        let prefix = "https://github.com/12subnet/zippo/releases/latest/download";
 
         // Use URL based on the platform name.
         let url = match name.as_str() {
@@ -38,11 +37,10 @@ impl Platform {
                 name
             )))
         } else {
-            let exe = name.as_str().starts_with("windows/");
+            let binary_name = url.split('/').last().unwrap_or("zippo").to_string();
             Ok(Platform {
                 url,
-                name,
-                exe,
+                binary_name,
                 binary_size: None,
             })
         }
@@ -50,39 +48,30 @@ impl Platform {
 
     // Cache Zippo Executable if not found in the cache directory.
     pub(crate) async fn cache_if_needed(&mut self) -> Result<Vec<u8>> {
-        let url = &self.url;
-        let bin_name = url.split('/').last().unwrap();
+        let path = format!(
+            "{}/.grizzly/cache/{}",
+            home::home_dir().unwrap().display(),
+            &self.binary_name
+        );
 
-        if !Path::exists(
-            format!(
-                "{}/.grizzly/cache/{}",
-                home::home_dir().unwrap().display(),
-                &self.name
-            )
-            .as_ref(),
-        ) {
+        if !Path::new(path.as_str()).exists() {
             fs::create_dir_all(format!(
                 "{}/.grizzly/cache/",
                 home::home_dir().unwrap().display()
             ))?;
-            let body = reqwest::get(url.clone()).await?.bytes().await?; // Cache Zippo unpacker if needed
-            fs::write(
-                format!(
-                    "{}/.grizzly/cache/{}",
-                    home::home_dir().unwrap().display(),
-                    bin_name
-                ),
-                body,
-            )?;
+
+            let body = reqwest::get(&self.url).await?.bytes().await?; // Cache Zippo unpacker if needed
+
+            fs::write(path, &body)?;
         }
 
         let binary = fs::read(format!(
             "{}/.grizzly/cache/{}",
             home::home_dir().unwrap().display(),
-            bin_name
+            &self.binary_name
         ))?;
 
-        self.binary_size = Some(binary.len() as u64); // Set the binary size
+        self.binary_size = Some(binary.len() as u64);
 
         Ok(binary)
     }
@@ -111,7 +100,7 @@ pub(crate) async fn generate_executable(
         false => filename = name,
     }
 
-    if platform.exe {
+    if platform.binary_name.ends_with(".exe") {
         filename.push_str(".exe");
     }
 
