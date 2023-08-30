@@ -1,4 +1,5 @@
 use console::{style, Emoji};
+use indicatif::HumanBytes;
 
 pub struct Progress;
 
@@ -25,7 +26,7 @@ impl Progress {
     }
     pub(crate) fn insert_pg() {
         println!(
-            "{} {}Inserting zip-file inside your binary...",
+            "{} {}Inserting a zip-file inside your binary...",
             style("[3/4]").bold().dim(),
             COMPUTER
         );
@@ -37,7 +38,13 @@ impl Progress {
             COMPUTER
         );
     }
-    pub(crate) fn done_pg() {
-        println!("{} {}Done!", style("READY").bold().dim(), SPARKLE);
+    pub(crate) fn done_pg(size: u64, size_binary: u64) {
+        println!(
+            "{} {}Successfully bundled. Archive size: {} ({} binary overhead).",
+            style("DONE").bold().dim(),
+            SPARKLE,
+            HumanBytes(size),
+            HumanBytes(size_binary)
+        );
     }
 }

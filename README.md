@@ -1,33 +1,42 @@
-# Grizzly 🐻 - Self-extractable (SFX) archives creator.
+# Grizzly 🐻
 
-### Philosophy
+Grizzly is a powerful command-line interface (CLI) tool that allows you to create self-extractable (SFX) archives with
+ease.
 
-I've created `Grizzly` as a hobby project. I thought that we don't need
-long commands (`tar -xvf ...`) or external apps to create and unzip an archive anymore.
-Create binaries that store all your files inside with only `453 KB` overhead and distribute them wherever you want.
+## Features
 
-### CLI
+- Compress files and folders into a single executable file
+- Easily share and extract archives on any computer without additional software
+- Customize the extraction process to fit your specific needs
 
-```shell
-$ grizzly --help
-SFX (Self-extractable) archives generator.
+## Installation
 
-Usage: grizzly [OPTIONS] --file <file> [COMMAND]
+To install Grizzly, simply download the latest release from the releases page and add it to your system's PATH.
 
-Commands:
-  prepare  Download the Go compiler to bundle an archive.
-  help     Print this message or the help of the given subcommand(s)
+## Usage
 
-Options:
-  -f, --file <file>          File to bundle (use multiple -f flags to bundle multiple files).
-  -p, --platform <platform>  Platform to build your bundle for. [possible values: linux/386, linux/amd64, linux/arm, linux/arm64, windows/386, windows/amd64, windows/arm, windows/arm64, darwin/386, darwin/amd64, darwin/arm, darwin/arm64]
-  -n, --name <name>          Set the name for binary. [Default: Random ID]
-  -h, --help                 Print help
-  -V, --version              Print version
-```
-
-**Usage:**
+To create an SFX archive, navigate to the directory containing the files and folders you want to compress and run the
+following command:
 
 ```shell
 $ grizzly -f file.txt
+```
+
+> Hint: use multiple `-f` tags to compress multiple files/directories, or use `-f .` to compress the current directory
+> recursively.
+
+## Help!
+
+```shell
+$ grizzly --help
+A powerful CLI tool for creating self-extractable (SFX) archives.
+
+Usage: grizzly [OPTIONS] --file <file> [COMMAND]
+
+Options:
+  -f, --file <file>          File to compress (use multiple -f flags to compress multiple files).
+  -h, --help                 Print help
+  -n, --name <name>          Set the name for binary. [Default: Random ID]
+  -p, --platform <platform>  Choose the platform for your binary. [possible values: windows/x86_64, windows/x86, windows/aarch64, linux/x86_64, linux/x86, linux/arm, macos/x86_64, macos/aarch64]
+  -V, --version              Print version
 ```

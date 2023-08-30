@@ -1,0 +1,116 @@
+name: Build and release
+
+on:
+  push:
+    tags: [ "v[0-9]+.[0-9]+.[0-9]+" ]
+
+permissions: write-all
+
+env:
+  CRATE_NAME: grizzly
+  GITHUB_TOKEN: ${{ github.token }}
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release_bin:
+    name: Building on ${{ matrix.platform.os_name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os_name: linux-x86_64
+            os: ubuntu-20.04
+            target: x86_64-unknown-linux-musl
+            bin: grizzly-linux-x86_64-musl
+
+          - os_name: linux-arm
+            os: ubuntu-20.04
+            target: arm-unknown-linux-musleabi
+            bin: grizzly-linux-arm-musl
+
+          - os_name: linux-i686
+            os: ubuntu-20.04
+            target: i686-unknown-linux-musl
+            bin: grizzly-linux-i686-musl
+            skip_tests: true
+
+          - os_name: windows-aarch64
+            os: windows-latest
+            target: aarch64-pc-windows-msvc
+            bin: grizzly-windows-aarch64.exe
+            skip_tests: true
+
+          - os_name: windows-i686
+            os: windows-latest
+            target: i686-pc-windows-msvc
+            bin: grizzly-windows-i686.exe
+            skip_tests: true
+
+          - os_name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin: grizzly-windows-x86_64.exe
+
+          - os_name: macOS-x86_64
+            os: macOS-latest
+            target: x86_64-apple-darwin
+            bin: grizzly-darwin-x86_64
+
+          - os_name: macOS-aarch64
+            os: macOS-latest
+            target: aarch64-apple-darwin
+            bin: grizzly-darwin-aarch64
+            skip_tests: true
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache cargo & target directories
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install musl-tools on linux
+        run: sudo apt-get update --yes && sudo apt-get install --yes musl-tools
+        if: contains(matrix.platform.target, 'musl')
+
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          toolchain: nightly
+          args: "--locked --release"
+          strip: true
+
+      - name: Rename the binary
+        shell: bash
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          if [[ "${{ matrix.platform.os }}" == "windows-latest" ]]; then
+            mv grizzly.exe ../../../${{ matrix.platform.bin }}
+          else
+            mv grizzly ../../../${{ matrix.platform.bin }}
+          fi
+          cd -
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: ${{ matrix.platform.bin }}
+
+  release_docker_image:
+    name: Build Docker Image
+    runs-on: ubuntu-22.04
+    needs: release_bin
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Docker Image
+        run: |
+          docker build -t grizzly .
+          docker tag grizzly:latest ghcr.io/12subnet/grizzly:latest
+          docker tag grizzly:latest ghcr.io/12subnet/grizzly:${{ github.sha }}
+      - name: Push Docker Image
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/12subnet/grizzly:latest
+          docker push ghcr.io/12subnet/grizzly:${{ github.ref_name }}    
