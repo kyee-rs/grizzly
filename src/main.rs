@@ -25,12 +25,12 @@
 use std::env;
 use std::path::PathBuf;
 
-use crate::binary_operations::Binary;
 use anyhow::Result;
 use clap::{arg, ArgAction, Command};
 use log::LevelFilter;
 use tokio::runtime::Runtime;
 
+use crate::binary_operations::Binary;
 use crate::compression_engine::compress;
 
 mod binary_operations;

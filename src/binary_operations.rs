@@ -41,7 +41,7 @@ impl Binary {
             home::home_dir().unwrap().display(),
             name
         )
-        .replace('\\', "/");
+            .replace('\\', "/");
 
         if !Path::new(path.as_str()).exists() {
             fs::create_dir_all(format!(
