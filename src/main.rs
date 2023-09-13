@@ -25,18 +25,17 @@
 use std::env;
 use std::path::PathBuf;
 
+use crate::binary_operations::Binary;
 use anyhow::Result;
 use clap::{arg, ArgAction, Command};
+use log::LevelFilter;
+use tokio::runtime::Runtime;
 
-use crate::binary_cloner::{generate_executable, Platform};
-use crate::compressor::compress;
-use crate::progress::Progress;
+use crate::compression_engine::compress;
 
-mod binary_cloner;
-mod compressor;
-mod progress;
+mod binary_operations;
+mod compression_engine;
 
-/// Create the CLI Command with specified subcommands and flags.
 fn cli() -> Command {
     Command::new("grizzly")
         .name("grizzly")
@@ -64,30 +63,48 @@ fn cli() -> Command {
         .arg_required_else_help(true)
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let matches = cli().get_matches(); // Parse the CLI command that user have requested.
-    let binding = String::new();
-    let name = matches
-        .get_one::<String>("name")
-        .unwrap_or(&binding)
-        .to_string();
-    let platform = Platform::from(
+fn main() -> Result<()> {
+    simple_logger::SimpleLogger::new()
+        .with_level(LevelFilter::Info)
+        .env()
+        .init()
+        .unwrap();
+
+    let matches = cli().get_matches();
+
+    let (name, platform, paths) = (
+        matches
+            .get_one::<String>("name")
+            .unwrap_or(&String::new())
+            .to_string(),
         matches
             .get_one::<String>("platform")
             .unwrap_or(&format!("{}/{}", env::consts::OS, env::consts::ARCH))
             .to_string(),
-    )?;
+        matches
+            .get_many::<PathBuf>("file")
+            .into_iter()
+            .flatten()
+            .cloned()
+            .collect(),
+    );
 
-    let paths = matches
-        .get_many::<PathBuf>("file")
-        .into_iter()
-        .flatten()
-        .collect::<Vec<&PathBuf>>(); // Collect the files from the request
+    let rt = Runtime::new()?;
 
-    let zip_buffer = compress(paths).await?; // Call the compressor and get back a zip buffer
-    let (file_size, platform_size) = generate_executable(zip_buffer, name, platform).await?; // Clone the Zippo Executable and append a ZIP to it.
+    let (binary, zip) = rt.block_on(async {
+        let binary = tokio::spawn(Binary::cache(platform));
+        let zip = tokio::spawn(compress(paths));
 
-    Progress::done_pg(file_size, platform_size); // Print the last stage (Done!)
+        tokio::try_join!(binary, zip)
+    })?;
+
+    let (file_size, platform_size) = binary?.generate_executable(zip?, name)?;
+
+    log::info!(
+        "Bundled. Final size: {} ({} binary overhead).",
+        human_bytes::human_bytes(file_size as f64),
+        human_bytes::human_bytes(platform_size as f64)
+    );
+
     Ok(())
 }

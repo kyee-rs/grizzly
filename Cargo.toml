@@ -7,18 +7,20 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.4.0", features = ["derive", "cargo"] }
 zip = "0.6.6"
-cool-id-generator = "1.0.1"
+nanoid = "0.4.0"
 anyhow = "1.0.75"
 reqwest = { version = "0.11", default_features = false, features = ["native-tls-vendored"] }
-tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "1.0.0", features = ["full"] }
 home = "0.5.5"
-console = { version = "0.15", default-features = false, features = ["ansi-parsing"] }
-indicatif = "0.17.6"
 rand = "0.8.5"
 walkdir = "2.3.3"
+log = "0.4.20"
+simple_logger = "4.2.0"
+human_bytes = "0.4.2"
 
 [profile.release]
 panic = "abort"
 strip = true
 opt-level = "z"
 lto = true
+codegen-units = 1
